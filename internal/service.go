@@ -6,6 +6,8 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"unicode"
+	"unicode/utf8"
 )
 
 func formatOutput(input *Input, output *Output) string {
@@ -43,21 +45,17 @@ func getFileByteSize(fileInfo *fs.FileInfo) int64 {
 }
 
 func isSpaceOrBreakLine(b byte) bool {
-	blByte := byte('\n')
-	spByte := byte(' ')
-	return b == blByte || b == spByte
+	bb, _ := utf8.DecodeRune([]byte{b})
+	return unicode.IsSpace(bb)
 }
-func wordCount(s []byte) int {
-	lByte := byte(' ')
+
+func wordCount(s []byte, lByte *byte) int {
 	c := 0
 	for _, cByte := range s {
-		if isSpaceOrBreakLine(cByte) && !isSpaceOrBreakLine(lByte) {
+		if isSpaceOrBreakLine(cByte) && !isSpaceOrBreakLine(*lByte) {
 			c += 1
 		}
-		lByte = cByte
-	}
-	if !isSpaceOrBreakLine(lByte) {
-		c += 1
+		*lByte = cByte
 	}
 	return c
 }
@@ -67,18 +65,22 @@ func getFileLineSize(r io.Reader) (int64, int64, error) {
 	var count int64 = 0
 	var countWords int64 = 0
 	breaklineByte := []byte{'\n'}
-
+	lByte := byte(' ')
 	for {
 		n, err := r.Read(buf)
 		count += int64(bytes.Count(buf[:n], breaklineByte))
-		countWords += int64(wordCount(buf[:n]))
+		countWords += int64(wordCount(buf[:n], &lByte))
 		if err == io.EOF {
-			return count, countWords, nil
+			break
 		}
 		if err != nil {
 			return count, countWords, err
 		}
 	}
+	if !isSpaceOrBreakLine(lByte) {
+		countWords += 1
+	}
+	return count, countWords, nil
 }
 
 func CalculateValues(input *Input) (*[]Output, *Output, *[]error) {
