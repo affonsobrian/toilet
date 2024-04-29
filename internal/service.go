@@ -106,6 +106,7 @@ func CalculateValues(input *Input) (*[]Output, *Output, *[]error) {
 		if input.Lines || input.Words {
 			fd.LineCount, fd.CharCount, _ = getFileLineSize(file)
 			total.LineCount += fd.LineCount
+			total.CharCount += fd.CharCount
 		}
 
 		datas = append(datas, fd)

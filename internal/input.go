@@ -22,6 +22,12 @@ func ParseInput() (*Input, int) {
 
 	flag.Parse()
 
+	if !(input.Bytes || input.Lines || input.Words) {
+		input.Bytes = true
+		input.Lines = true
+		input.Words = true
+	}
+
 	input.FilePaths = flag.Args()
 	return input, len(input.FilePaths)
 }
